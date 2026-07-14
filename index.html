@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 10 Scorecard</title>
+    <style>
+        :root {
+            --bg: #f8fafc; --card: #fff; --txt: #1e293b; --sub: #64748b;
+            --border: #e2e8f0; --primary: #2563eb; --success: #16a34a; --danger: #dc2626;
+        }
+        .dark {
+            --bg: #0f172a; --card: #1e293b; --txt: #f8fafc; --sub: #94a3b8;
+            --border: #334155; --primary: #3b82f6;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--txt);
+            margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
+        }
+        .container { width: 100%; max-width: 500px; background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); box-sizing: border-box; position: relative; }
+        .top-ctrls { position: absolute; top: 15px; right: 15px; display: flex; gap: 10px; }
+        .icon-btn { font-size: 1.2rem; cursor: pointer; background: none; border: none; padding: 5px; color: var(--txt); }
+        .hidden { display: none !important; }
+        .flex-col { display: flex; flex-direction: column; gap: 12px; }
+        input { padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--txt); font-size: 1rem; }
+        
+        /* Remove spinner arrows for clean input boxes */
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        button { background: var(--primary); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button.success { background: var(--success); }
+        button.danger { background: var(--danger); }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
+        th { background: var(--border); }
+        .phase-link { color: var(--primary); text-decoration: underline; cursor: pointer; font-weight: bold; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10; padding: 15px; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; box-sizing: border-box; }
+        .calc-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .calc-ctrls { display: flex; align-items: center; gap: 10px; }
+        .calc-ctrls button { width: 35px; height: 35px; background: var(--border); color: var(--txt); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-ctrls">
+        <button class="icon-btn" onclick="openHelp()" title="Rules & Help">❓</button>
+        <button class="icon-btn" id="theme-btn" onclick="toggleTheme()">☀️</button>
+    </div>
+    
+    <h2 style="margin: 0 0 15px 0; text-align: center;">Phase 10</h2>
+
+    <div id="setup-screen" class="flex-col">
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="p-name" placeholder="Player Name" style="flex:1;" onkeypress="if(event.key==='Enter')addPlayer()">
+            <button onclick="addPlayer()">Add</button>
+        </div>
+        <ul id="p-list" style="padding:0; margin:0; list-style:none;"></ul>
+        <button id="start-btn" class="success hidden" onclick="startGame()">Start Game</button>
+    </div>
+
+    <div id="game-screen" class="flex-col hidden">
+        <div style="background:var(--bg); padding:8px; border-radius:6px; text-align:center; font-weight:bold; border:1px solid var(--border);">
+            Round <span id="r-num">1</span> — Dealer: <span id="d-name"></span>
+        </div>
+
+        <table>
+            <thead><tr><th>Player</th><th>Phase</th><th>Score</th></tr></thead>
+            <tbody id="score-body"></tbody>
+        </table>
+
+        <h3 style="margin: 10px 0 0; text-align: center;">End of Round</h3>
+        <table>
+            <thead><tr><th>Player</th><th>Cleared?</th><th>Score to Add</th></tr></thead>
+            <tbody id="input-body"></tbody>
+        </table>
+        <button id="submit-btn" class="success" onclick="submitRound()">Submit Round</button>
+    </div>
+</div>
+
+<div id="calc-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="calc-user" style="margin-top:0;">Card Counter</h3>
+        <div id="calc-rows-container"></div>
+        <h4 style="text-align:center; margin:15px 0;">Total Points: <span id="calc-total" style="color:var(--primary);">0</span></h4>
+        <div style="display:flex; gap:10px;">
+            <button onclick="closeCalc(false)" class="danger" style="flex:1;">Cancel</button>
+            <button onclick="closeCalc(true)" class="success" style="flex:1;">Apply</button>
+        </div>
+    </div>
+</div>
+
+<div id="help-modal" class="modal hidden" onclick="this.classList.add('hidden')">
+    <div class="modal-content" onclick="event.stopPropagation()" style="text-align: left;">
+        <h3 style="margin-top:0; text-align:center;">Rules & All Phases</h3>
+        
+        <h4 style="margin:10px 0 5px;">The 10 Phases</h4>
+        <ol id="help-phases-list" style="padding-left:20px; margin:0 0 15px 0; font-size:0.9rem; line-height:1.4;"></ol>
+
+        <h4 style="margin:10px 0 5px;">How to Use the App</h4>
+        <ul style="padding-left:20px; margin:0 0 15px 0; font-size:0.85rem; line-height:1.4; color:var(--sub);">
+            <li><strong>Phase Column:</strong> Tap any player's Phase number to quickly view what that specific phase requires.</li>
+            <li><strong>Cleared Checkbox:</strong> Check this at the end of a round if the player successfully laid down their phase.</li>
+            <li><strong>Score Addition:</strong> Enter the point value manually, or tap the <strong style="color:var(--primary);">Calc</strong> button to count up remaining cards.</li>
+        </ul>
+
+        <h4 style="margin:10px 0 5px;">Point Values</h4>
+        <ul style="padding-left:20px; margin:0; font-size:0.85rem; line-height:1.4; color:var(--sub);">
+            <li>Cards 1-9: 5 Points</li>
+            <li>Cards 10-12: 10 Points</li>
+            <li>Skips: 15 Points</li>
+            <li>Wilds: 25 Points</li>
+        </ul>
+        <button onclick="document.getElementById('help-modal').classList.add('hidden')" style="width:100%; margin-top:20px;">Close</button>
+    </div>
+</div>
+
+<div id="phase-modal" class="modal hidden" onclick="this.classList.add('hidden')">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 style="margin-top:0; text-align:center;">Phase Requirement</h3>
+        <p id="phase-detail-text" style="text-align:center; font-size:1.1rem; font-weight:bold; margin:20px 0;"></p>
+        <button onclick="document.getElementById('phase-modal').classList.add('hidden')" style="width:100%;">OK</button>
+    </div>
+</div>
+
+<script>
+    let players = [], round = 1, dealer = 0, activeInputId = null;
+    const cards = [
+        { key: 'c1_9', label: 'Cards 1–9', val: 5, qty: 0 },
+        { key: 'c10_12', label: 'Cards 10–12', val: 10, qty: 0 },
+        { key: 'skip', label: 'Skips', val: 15, qty: 0 },
+        { key: 'wild', label: 'Wilds', val: 25, qty: 0 }
+    ];
+    const phases = [
+        "2 sets of 3", "1 set of 3 + 1 run of 4", "1 set of 4 + 1 run of 4", "1 run of 7",
+        "1 run of 8", "1 run of 9", "2 sets of 4", "7 cards of 1 color", 
+        "1 set of 5 + 1 set of 2", "1 set of 5 + 1 set of 3"
+    ];
+
+    // Theme Toggle (Auto-detects initially, manual button overrides)
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) toggleTheme(true);
+    function toggleTheme(forceDark = null) {
+        const isDark = forceDark !== null ? forceDark : !document.body.classList.contains('dark');
+        document.body.classList.toggle('dark', isDark);
+        document.getElementById('theme-btn').innerText = isDark ? '🌙' : '☀️';
+    }
+
+    // --- Game Logic ---
+    function addPlayer() {
+        const name = document.getElementById('p-name').value.trim();
+        if (!name) return;
+        
+        // Validation: Duplicate Name Check
+        if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+            alert(`"${name}" has already been added to this game.`);
+            return;
+        }
+
+        players.push({ name, score: 0, phase: 1 });
+        document.getElementById('p-name').value = '';
+        renderSetup();
+    }
+
+    function renderSetup() {
+        const list = document.getElementById('p-list');
+        list.innerHTML = players.map((p, i) => `
+            <li style="display:flex; justify-content:space-between; margin-bottom:5px; background:var(--bg); padding:6px; border-radius:4px;">
+                <span>${p.name}</span><button class="danger" style="padding:2px 6px; font-size:0.8rem;" onclick="players.splice(${i},1);renderSetup()">X</button>
+            </li>
+        `).join('');
+        document.getElementById('start-btn').classList.toggle('hidden', players.length < 2);
+    }
+
+    function startGame() {
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        dealer = Math.floor(Math.random() * players.length);
+        updateUI();
+    }
+
+    function showPhase(num) {
+        document.getElementById('phase-detail-text').innerText = num > 10 ? 'Game Complete!' : `Phase ${num}: ${phases[num - 1]}`;
+        document.getElementById('phase-modal').classList.remove('hidden');
+    }
+
+    function openHelp() {
+        const list = document.getElementById('help-phases-list');
+        list.innerHTML = phases.map((p, i) => `<li><strong>Phase ${i+1}:</strong> ${p}</li>`).join('');
+        document.getElementById('help-modal').classList.remove('hidden');
+    }
+
+    function updateUI() {
+        document.getElementById('r-num').innerText = round;
+        document.getElementById('d-name').innerText = players[dealer].name;
+        
+        document.getElementById('score-body').innerHTML = players.map(p => `
+            <tr>
+                <td style="font-weight:bold;">${p.name}</td>
+                <td><span class="phase-link" onclick="showPhase(${p.phase})">${p.phase <= 10 ? p.phase : 'Done'}</span></td>
+                <td style="font-weight:bold; color:var(--primary);">${p.score}</td>
+            </tr>
+        `).join('');
+
+        document.getElementById('input-body').innerHTML = players.map((p, i) => `
+            <tr>
+                <td>${p.name}</td>
+                <td><input type="checkbox" id="chk-${i}" ${p.phase > 10 ? 'disabled' : ''}></td>
+                <td>
+                    <div style="display:flex; align-items:center; justify-content:center; gap:5px;">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" id="pts-${i}" value="0" style="width:50px; text-align:center;">
+                        <button style="padding:4px 8px; font-size:0.8rem;" onclick="openCalc(${i})">Calc</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function submitRound() {
+        let winners = [];
+        let validationPassed = true;
+
+        // Validation Check
+        players.forEach((p, i) => {
+            const inputVal = document.getElementById(`pts-${i}`).value;
+            const scoreToAdd = parseInt(inputVal) || 0;
+
+            // Enforce scores must be non-negative and divisible by 5 (ending in 0 or 5)
+            if (scoreToAdd % 5 !== 0 || scoreToAdd < 0 || isNaN(scoreToAdd)) {
+                alert(`Error: ${p.name}'s points must be a valid number ending in 5 or 0.`);
+                document.getElementById(`pts-${i}`).focus();
+                validationPassed = false;
+            }
+        });
+
+        if (!validationPassed) return; // Halt execution if input score fails validation
+
+        players.forEach((p, i) => {
+            const scoreToAdd = parseInt(document.getElementById(`pts-${i}`).value) || 0;
+            if (document.getElementById(`chk-${i}`).checked && p.phase <= 10) p.phase++;
+            p.score += scoreToAdd;
+            if (p.phase > 10) winners.push(p);
+        });
+
+        if (winners.length) {
+            winners.sort((a,b) => a.score - b.score);
+            alert(`🎉 ${winners[0].name} wins with ${winners[0].score} points!`);
+            location.reload();
+            return;
+        }
+        round++;
+        dealer = (dealer + 1) % players.length;
+        updateUI();
+    }
+
+    // --- Calculator Logic ---
+    function openCalc(pIdx) {
+        activeInputId = `pts-${pIdx}`;
+        document.getElementById('calc-user').innerText = `Cards: ${players[pIdx].name}`;
+        cards.forEach(c => c.qty = 0);
+        renderCalc();
+        document.getElementById('calc-modal').classList.remove('hidden');
+    }
+
+    function renderCalc() {
+        let total = 0;
+        document.getElementById('calc-rows-container').innerHTML = cards.map((c, i) => {
+            total += c.qty * c.val;
+            return `
+                <div class="calc-row">
+                    <div><strong>${c.label}</strong> <small style="color:var(--sub); display:block;">${c.val} pts</small></div>
+                    <div class="calc-ctrls">
+                        <button onclick="changeQty(${i},-1)">-</button>
+                        <span style="font-weight:bold; min-width:20px; text-align:center;">${c.qty}</span>
+                        <button onclick="changeQty(${i},1)">+</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        document.getElementById('calc-total').innerText = total;
+    }
+
+    function changeQty(idx, amt) {
+        cards[idx].qty = Math.max(0, cards[idx].qty + amt);
+        renderCalc();
+    }
+
+    function closeCalc(apply) {
+        if (apply && activeInputId) {
+            document.getElementById(activeInputId).value = document.getElementById('calc-total').innerText;
+        }
+        document.getElementById('calc-modal').classList.add('hidden');
+        activeInputId = null;
+    }
+</script>
+
+</body>
+</html>
