@@ -209,12 +209,52 @@
                 <td><input type="checkbox" id="chk-${i}" ${p.phase > 10 ? 'disabled' : ''}></td>
                 <td>
                     <div style="display:flex; align-items:center; justify-content:center; gap:5px;">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" id="pts-${i}" value="0" style="width:50px; text-align:center;">
+                        <input type="text" 
+                               inputmode="numeric" 
+                               pattern="[0-9]*" 
+                               id="pts-${i}" 
+                               value="0" 
+                               style="width:50px; text-align:center;"
+                               onfocus="onScoreFocus(this)" 
+                               onblur="onScoreBlur(this)"
+                               onkeydown="onScoreKeyDown(event, ${i})">
                         <button style="padding:4px 8px; font-size:0.8rem;" onclick="openCalc(${i})">Calc</button>
                     </div>
                 </td>
             </tr>
         `).join('');
+    }
+
+    // Clear the '0' when focused so the player can type instantly
+    function onScoreFocus(input) {
+        if (input.value === '0') {
+            input.value = '';
+        }
+    }
+
+    // Revert back to '0' if user leaves it empty
+    function onScoreBlur(input) {
+        if (input.value.trim() === '') {
+            input.value = '0';
+        }
+    }
+
+    // Track standard enter/mobile "Go" buttons
+    function onScoreKeyDown(event, currentIndex) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Stop default form actions
+            
+            const nextIndex = currentIndex + 1;
+            const nextInput = document.getElementById(`pts-${nextIndex}`);
+            
+            if (nextInput) {
+                // Focus and auto-select next input
+                nextInput.focus();
+            } else {
+                // If it was the last person, submit the round automatically!
+                submitRound();
+            }
+        }
     }
 
     function submitRound() {
@@ -226,7 +266,7 @@
             const inputVal = document.getElementById(`pts-${i}`).value;
             const scoreToAdd = parseInt(inputVal) || 0;
 
-            // Enforce scores must be non-negative and divisible by 5 (ending in 0 or 5)
+            // Enforce scores must end in 0 or 5
             if (scoreToAdd % 5 !== 0 || scoreToAdd < 0 || isNaN(scoreToAdd)) {
                 alert(`Error: ${p.name}'s points must be a valid number ending in 5 or 0.`);
                 document.getElementById(`pts-${i}`).focus();
@@ -234,7 +274,7 @@
             }
         });
 
-        if (!validationPassed) return; // Halt execution if input score fails validation
+        if (!validationPassed) return; // Stop submission if scores fail validation
 
         players.forEach((p, i) => {
             const scoreToAdd = parseInt(document.getElementById(`pts-${i}`).value) || 0;
