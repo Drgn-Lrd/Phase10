@@ -1,338 +1,791 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phase 10 Scorecard</title>
-    <style>
-        :root {
-            --bg: #f8fafc; --card: #fff; --txt: #1e293b; --sub: #64748b;
-            --border: #e2e8f0; --primary: #2563eb; --success: #16a34a; --danger: #dc2626;
-        }
-        .dark {
-            --bg: #0f172a; --card: #1e293b; --txt: #f8fafc; --sub: #94a3b8;
-            --border: #334155; --primary: #3b82f6;
-        }
-        body {
-            font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--txt);
-            margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
-        }
-        .container { width: 100%; max-width: 500px; background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); box-sizing: border-box; position: relative; }
-        .top-ctrls { position: absolute; top: 15px; right: 15px; display: flex; gap: 10px; }
-        .icon-btn { font-size: 1.2rem; cursor: pointer; background: none; border: none; padding: 5px; color: var(--txt); }
-        .hidden { display: none !important; }
-        .flex-col { display: flex; flex-direction: column; gap: 12px; }
-        input { padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--txt); font-size: 1rem; }
-        
-        /* Remove spinner arrows for clean input boxes */
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 10 Scorecard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* dark / felt (night) — default */
+    --felt: #0b3d2e;
+    --felt-deep: #072a20;
+    --felt-light: #145c41;
+    --card-bg: rgba(9, 41, 30, 0.6);
+    --panel-border: rgba(255, 255, 255, 0.08);
+    --txt: #f7f3e9;
+    --sub: #d8cfba;
+    --border: rgba(255, 255, 255, 0.16);
+    --input-bg: rgba(255, 255, 255, 0.06);
+    --primary: #e8c874;
+    --primary-ink: #1c2b24;
+    --success: #4c9f70;
+    --danger: #e4572e;
+    --red: #e4572e;
+    --blue: #2e86ab;
+    --yellow: #f2b705;
+    --green: #4c9f70;
+    --purple: #7d5ba6;
+    --shadow: rgba(0, 0, 0, 0.35);
+  }
 
-        button { background: var(--primary); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        button.success { background: var(--success); }
-        button.danger { background: var(--danger); }
-        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
-        th { background: var(--border); }
-        .phase-link { color: var(--primary); text-decoration: underline; cursor: pointer; font-weight: bold; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 10; padding: 15px; }
-        .modal-content { background: var(--card); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 85vh; overflow-y: auto; box-sizing: border-box; }
-        .calc-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
-        .calc-ctrls { display: flex; align-items: center; gap: 10px; }
-        .calc-ctrls button { width: 35px; height: 35px; background: var(--border); color: var(--txt); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-    </style>
+  body.light {
+    /* cream / parchment (day) */
+    --felt: #ece4d2;
+    --felt-deep: #ddd2b8;
+    --felt-light: #f6f1e3;
+    --card-bg: rgba(255, 255, 255, 0.72);
+    --panel-border: rgba(43, 33, 24, 0.1);
+    --txt: #2b2118;
+    --sub: #6b5e4d;
+    --border: rgba(43, 33, 24, 0.15);
+    --input-bg: rgba(43, 33, 24, 0.04);
+    --primary: #1f6f4a;
+    --primary-ink: #fff;
+    --success: #2f8f5b;
+    --danger: #c1432a;
+    --shadow: rgba(43, 33, 24, 0.15);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    color: var(--txt);
+    background: radial-gradient(ellipse at top, var(--felt-light) 0%, var(--felt) 45%, var(--felt-deep) 100%);
+    background-attachment: fixed;
+    padding: 1.75rem 1rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .wrap { width: 100%; max-width: 520px; }
+
+  /* ---------- Title made of cards ---------- */
+  .top-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .icon-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--panel-border);
+    color: var(--txt);
+    font-size: 1.05rem;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+  .icon-btn:hover { filter: brightness(1.1); }
+
+  header.hero { text-align: center; margin-bottom: 1.5rem; }
+  .card-title {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 0.6rem;
+  }
+  .card-letter {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.15rem, 5vw, 1.7rem);
+    width: clamp(1.7rem, 6.5vw, 2.35rem);
+    height: clamp(2.3rem, 8.5vw, 3.15rem);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f7f3e9;
+    position: relative;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.25), 0 8px 14px var(--shadow);
+    border: 2px solid rgba(255,255,255,0.18);
+    transform: rotate(var(--r, 0deg));
+    transition: transform 0.2s ease;
+  }
+  .card-letter:hover { transform: rotate(0deg) translateY(-3px); }
+  .card-letter::before, .card-letter::after {
+    content: attr(data-pip);
+    position: absolute;
+    font-family: 'Fredoka', sans-serif;
+    font-size: 0.5rem;
+    font-weight: 600;
+    opacity: 0.85;
+  }
+  .card-letter::before { top: 3px; left: 4px; }
+  .card-letter::after { bottom: 3px; right: 4px; transform: rotate(180deg); }
+  .card-title .num-card { background: var(--felt-deep); border-color: var(--primary); }
+  .tagline { font-size: 0.86rem; color: var(--sub); margin: 0; }
+
+  /* ---------- Panels ---------- */
+  .panel {
+    background: var(--card-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 1.1rem;
+    margin-bottom: 1.1rem;
+    backdrop-filter: blur(6px);
+  }
+  .hidden { display: none !important; }
+  .flex-col { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  h2.section-title, h3.section-title {
+    font-family: 'Fredoka', sans-serif;
+    color: var(--primary);
+    margin: 0 0 0.75rem;
+    font-size: 1.02rem;
+    text-align: center;
+  }
+
+  input[type="text"] {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--txt);
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    width: 100%;
+  }
+  input[type="text"]::placeholder { color: var(--sub); }
+  input:focus { outline: 2px solid var(--primary); outline-offset: 1px; }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  button {
+    background: var(--primary);
+    color: var(--primary-ink);
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: filter 0.12s ease, transform 0.12s ease;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:active { transform: translateY(1px); }
+  button.success { background: var(--success); color: #fff; }
+  button.danger { background: var(--danger); color: #fff; }
+  button.ghost {
+    background: transparent;
+    color: var(--sub);
+    border: 1px solid var(--border);
+  }
+
+  .add-player-row { display: flex; gap: 0.5rem; }
+  .add-player-row input { flex: 1; }
+
+  ul#p-list { padding: 0; margin: 0; list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+  ul#p-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--panel-border);
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  ul#p-list li button { padding: 0.2rem 0.5rem; font-size: 0.75rem; }
+
+  /* ---------- Game screen ---------- */
+  .round-plaque {
+    background: var(--felt-deep);
+    border: 1px solid var(--panel-border);
+    padding: 0.7rem;
+    border-radius: 10px;
+    text-align: center;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 1rem;
+  }
+  body.light .round-plaque { color: var(--primary); background: var(--felt-light); }
+
+  table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.88rem; }
+  th, td { border: 1px solid var(--panel-border); padding: 0.55rem; text-align: center; }
+  th { background: var(--felt-deep); color: var(--sub); font-weight: 600; font-family: 'Fredoka', sans-serif; font-size: 0.82rem; }
+  body.light th { background: var(--felt-light); }
+  td.name-cell { font-weight: 600; text-align: left; }
+  .phase-link {
+    color: var(--primary);
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .score-cell-val { font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', monospace; }
+
+  .pts-input-wrap { display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+  .pts-input {
+    width: 3.4rem;
+    padding: 0.4rem 0.3rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--txt);
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+  }
+  .pts-input.invalid { border-color: var(--danger); background: rgba(228,87,46,0.12); }
+  .calc-btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.78rem;
+    background: var(--input-bg);
+    color: var(--txt);
+    border: 1px solid var(--border);
+  }
+  .field-error {
+    font-size: 0.65rem;
+    color: var(--danger);
+    min-height: 0.9em;
+    margin-top: 0.2rem;
+  }
+  input[type="checkbox"] { width: 1.1rem; height: 1.1rem; accent-color: var(--primary); cursor: pointer; }
+  input[type="checkbox"]:disabled { opacity: 0.7; }
+
+  #submit-btn { width: 100%; margin-top: 0.3rem; padding: 0.75rem; font-size: 0.95rem; }
+
+  /* ---------- Modals ---------- */
+  .modal {
+    position: fixed; inset: 0;
+    background: rgba(4, 20, 14, 0.7);
+    backdrop-filter: blur(3px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 20; padding: 1rem;
+  }
+  .modal-content {
+    background: var(--felt-deep);
+    border: 1px solid var(--panel-border);
+    padding: 1.3rem;
+    border-radius: 16px;
+    width: 100%; max-width: 400px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  body.light .modal-content { background: #fffdf8; }
+  .modal-content h3 { font-family: 'Fredoka', sans-serif; color: var(--primary); margin-top: 0; text-align: center; }
+  .modal-content h4 { font-family: 'Fredoka', sans-serif; color: var(--txt); margin: 0.8rem 0 0.4rem; font-size: 0.92rem; }
+  .modal-content ul, .modal-content ol { padding-left: 1.2rem; margin: 0 0 0.9rem; font-size: 0.85rem; line-height: 1.5; color: var(--sub); }
+  .modal-content ol li strong, .modal-content ul li strong { color: var(--txt); }
+
+  .calc-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.55rem 0; border-bottom: 1px solid var(--panel-border);
+  }
+  .calc-row strong { font-family: 'Fredoka', sans-serif; font-size: 0.92rem; }
+  .calc-row small { color: var(--sub); display: block; font-size: 0.72rem; }
+  .calc-ctrls { display: flex; align-items: center; gap: 0.6rem; }
+  .calc-ctrls button {
+    width: 2.1rem; height: 2.1rem; border-radius: 50%;
+    background: var(--input-bg); color: var(--txt);
+    font-size: 1.05rem; display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .calc-total { text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1.4rem; color: var(--primary); margin: 1rem 0; }
+
+  /* winner banner (in-page, not a modal) */
+  #winner-banner {
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary), #c9a441);
+    border: none;
+  }
+  body.light #winner-banner { background: linear-gradient(135deg, #cfead9, #9fd6b8); }
+  .winner-badge {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.35rem;
+    color: var(--primary-ink);
+    margin: 0.1rem 0 0.15rem;
+  }
+  .winner-sub { text-align: center; color: var(--primary-ink); opacity: 0.75; font-size: 0.82rem; margin-bottom: 0; }
+
+  /* ---------- Toast ---------- */
+  #toast {
+    position: fixed;
+    bottom: 1.25rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: var(--danger);
+    color: #fff;
+    padding: 0.7rem 1.1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    z-index: 30;
+    transition: transform 0.25s ease;
+    max-width: 90vw;
+    text-align: center;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <div class="top-ctrls">
-        <button class="icon-btn" onclick="openHelp()" title="Rules & Help">❓</button>
-        <button class="icon-btn" id="theme-btn" onclick="toggleTheme()">☀️</button>
+<div class="wrap">
+  <div class="top-bar">
+    <button class="icon-btn" onclick="openHelp()" title="Rules & Help">❓</button>
+    <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle day/night">🌙</button>
+  </div>
+
+  <header class="hero">
+    <div class="card-title" id="titleCards" aria-label="Phase 10"></div>
+    <p class="tagline">Complete each phase in order — lowest total wins.</p>
+  </header>
+
+  <div id="setup-screen" class="panel flex-col">
+    <h2 class="section-title">Players</h2>
+    <div class="add-player-row">
+      <input type="text" id="p-name" placeholder="Player name" onkeypress="if(event.key==='Enter'){event.preventDefault();addPlayer();}">
+      <button onclick="addPlayer()">Add</button>
     </div>
-    
-    <h2 style="margin: 0 0 15px 0; text-align: center;">Phase 10</h2>
+    <ul id="p-list"></ul>
+    <button id="start-btn" class="success hidden" onclick="startGame()">Start game</button>
+  </div>
 
-    <div id="setup-screen" class="flex-col">
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="p-name" placeholder="Player Name" style="flex:1;" onkeypress="if(event.key==='Enter')addPlayer()">
-            <button onclick="addPlayer()">Add</button>
-        </div>
-        <ul id="p-list" style="padding:0; margin:0; list-style:none;"></ul>
-        <button id="start-btn" class="success hidden" onclick="startGame()">Start Game</button>
+  <div id="game-screen" class="hidden">
+    <div class="round-plaque" id="round-plaque">Round <span id="r-num">1</span> — Dealer: <span id="d-name"></span></div>
+    <div class="panel hidden" id="winner-banner"></div>
+
+    <div class="panel">
+      <table>
+        <thead><tr><th>Player</th><th>Phase</th><th>Score</th></tr></thead>
+        <tbody id="score-body"></tbody>
+      </table>
     </div>
 
-    <div id="game-screen" class="flex-col hidden">
-        <div style="background:var(--bg); padding:8px; border-radius:6px; text-align:center; font-weight:bold; border:1px solid var(--border);">
-            Round <span id="r-num">1</span> — Dealer: <span id="d-name"></span>
-        </div>
+    <div class="panel" id="end-of-round-panel">
+      <h3 class="section-title" id="end-of-round-title">End of round</h3>
+      <table id="input-table">
+        <thead><tr><th>Player</th><th>Cleared?</th><th>Score to add</th></tr></thead>
+        <tbody id="input-body"></tbody>
+      </table>
+      <button id="submit-btn" class="success" onclick="submitRound()">Submit round</button>
 
-        <table>
-            <thead><tr><th>Player</th><th>Phase</th><th>Score</th></tr></thead>
-            <tbody id="score-body"></tbody>
-        </table>
-
-        <h3 style="margin: 10px 0 0; text-align: center;">End of Round</h3>
-        <table>
-            <thead><tr><th>Player</th><th>Cleared?</th><th>Score to Add</th></tr></thead>
-            <tbody id="input-body"></tbody>
-        </table>
-        <button id="submit-btn" class="success" onclick="submitRound()">Submit Round</button>
+      <div id="new-game-actions" class="hidden" style="display:flex; flex-direction:column; gap:0.5rem;">
+        <button class="success" onclick="newGameSamePlayers()">New game — same players</button>
+        <button class="ghost" onclick="newGameNewPlayers()">New game — new players</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <div id="calc-modal" class="modal hidden">
-    <div class="modal-content">
-        <h3 id="calc-user" style="margin-top:0;">Card Counter</h3>
-        <div id="calc-rows-container"></div>
-        <h4 style="text-align:center; margin:15px 0;">Total Points: <span id="calc-total" style="color:var(--primary);">0</span></h4>
-        <div style="display:flex; gap:10px;">
-            <button onclick="closeCalc(false)" class="danger" style="flex:1;">Cancel</button>
-            <button onclick="closeCalc(true)" class="success" style="flex:1;">Apply</button>
-        </div>
+  <div class="modal-content">
+    <h3 id="calc-user">Card counter</h3>
+    <div class="calc-row" style="border-bottom:none;">
+      <div><strong>Phase cleared?</strong><small>Completed this round</small></div>
+      <input type="checkbox" id="calc-cleared" style="width:1.3rem; height:1.3rem;" onchange="validateCalc()">
     </div>
+    <div id="calc-rows-container"></div>
+    <div class="calc-total">Total points: <span id="calc-total">0</span></div>
+    <div class="field-error" id="calc-err" style="text-align:center; min-height:1em; margin-bottom:0.5rem;"></div>
+    <div style="display:flex; gap:0.6rem;">
+      <button onclick="closeCalc(false)" class="danger" style="flex:1;">Cancel</button>
+      <button onclick="closeCalc(true)" class="success" style="flex:1;">Apply</button>
+    </div>
+  </div>
 </div>
 
 <div id="help-modal" class="modal hidden" onclick="this.classList.add('hidden')">
-    <div class="modal-content" onclick="event.stopPropagation()" style="text-align: left;">
-        <h3 style="margin-top:0; text-align:center;">Rules & All Phases</h3>
-        
-        <h4 style="margin:10px 0 5px;">The 10 Phases</h4>
-        <ol id="help-phases-list" style="padding-left:20px; margin:0 0 15px 0; font-size:0.9rem; line-height:1.4;"></ol>
-
-        <h4 style="margin:10px 0 5px;">How to Use the App</h4>
-        <ul style="padding-left:20px; margin:0 0 15px 0; font-size:0.85rem; line-height:1.4; color:var(--sub);">
-            <li><strong>Phase Column:</strong> Tap any player's Phase number to quickly view what that specific phase requires.</li>
-            <li><strong>Cleared Checkbox:</strong> Check this at the end of a round if the player successfully laid down their phase.</li>
-            <li><strong>Score Addition:</strong> Enter the point value manually, or tap the <strong style="color:var(--primary);">Calc</strong> button to count up remaining cards.</li>
-        </ul>
-
-        <h4 style="margin:10px 0 5px;">Point Values</h4>
-        <ul style="padding-left:20px; margin:0; font-size:0.85rem; line-height:1.4; color:var(--sub);">
-            <li>Cards 1-9: 5 Points</li>
-            <li>Cards 10-12: 10 Points</li>
-            <li>Skips: 15 Points</li>
-            <li>Wilds: 25 Points</li>
-        </ul>
-        <button onclick="document.getElementById('help-modal').classList.add('hidden')" style="width:100%; margin-top:20px;">Close</button>
-    </div>
+  <div class="modal-content" onclick="event.stopPropagation()" style="text-align:left;">
+    <h3>Rules & all phases</h3>
+    <h4>The 10 phases</h4>
+    <ol id="help-phases-list"></ol>
+    <h4>How to use this scorecard</h4>
+    <ul>
+      <li><strong>Phase column:</strong> tap a player's phase number to see what that phase requires.</li>
+      <li><strong>Cleared checkbox:</strong> check this at the end of a round if the player laid down their phase.</li>
+      <li><strong>Score to add:</strong> type the point value, or tap <strong style="color:var(--primary);">Calc</strong> to count up remaining cards.</li>
+    </ul>
+    <h4>Point values</h4>
+    <ul>
+      <li>Cards 1–9: 5 points</li>
+      <li>Cards 10–12: 10 points</li>
+      <li>Skips: 15 points</li>
+      <li>Wilds: 25 points</li>
+    </ul>
+    <button onclick="document.getElementById('help-modal').classList.add('hidden')" style="width:100%; margin-top:0.5rem;">Close</button>
+  </div>
 </div>
 
 <div id="phase-modal" class="modal hidden" onclick="this.classList.add('hidden')">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 style="margin-top:0; text-align:center;">Phase Requirement</h3>
-        <p id="phase-detail-text" style="text-align:center; font-size:1.1rem; font-weight:bold; margin:20px 0;"></p>
-        <button onclick="document.getElementById('phase-modal').classList.add('hidden')" style="width:100%;">OK</button>
-    </div>
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <h3>Phase requirement</h3>
+    <p id="phase-detail-text" style="text-align:center; font-size:1.05rem; font-weight:600; margin:1.1rem 0; font-family:'Fredoka',sans-serif; color:var(--txt);"></p>
+    <button onclick="document.getElementById('phase-modal').classList.add('hidden')" style="width:100%;">OK</button>
+  </div>
 </div>
 
+<div id="winner-modal" class="modal hidden">
+  <div class="modal-content" style="text-align:center;">
+    <div style="font-size:2.2rem;">🏆</div>
+    <div class="winner-badge" id="winner-name" style="color:var(--primary);"></div>
+    <div class="winner-sub" id="winner-sub" style="color:var(--sub); opacity:1;"></div>
+    <button class="success" style="width:100%; margin-top:1rem;" onclick="document.getElementById('winner-modal').classList.add('hidden')">View final scores</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
 <script>
-    let players = [], round = 1, dealer = 0, activeInputId = null;
-    const cards = [
-        { key: 'c1_9', label: 'Cards 1–9', val: 5, qty: 0 },
-        { key: 'c10_12', label: 'Cards 10–12', val: 10, qty: 0 },
-        { key: 'skip', label: 'Skips', val: 15, qty: 0 },
-        { key: 'wild', label: 'Wilds', val: 25, qty: 0 }
-    ];
-    const phases = [
-        "2 sets of 3", "1 set of 3 + 1 run of 4", "1 set of 4 + 1 run of 4", "1 run of 7",
-        "1 run of 8", "1 run of 9", "2 sets of 4", "7 cards of 1 color", 
-        "1 set of 5 + 1 set of 2", "1 set of 5 + 1 set of 3"
-    ];
+  let players = [], round = 1, dealer = 0, activeInputId = null;
+  const cardCounters = [
+    { key: 'c1_9', label: 'Cards 1–9', val: 5, qty: 0 },
+    { key: 'c10_12', label: 'Cards 10–12', val: 10, qty: 0 },
+    { key: 'skip', label: 'Skips', val: 15, qty: 0 },
+    { key: 'wild', label: 'Wilds', val: 25, qty: 0 }
+  ];
+  const phases = [
+    "2 sets of 3", "1 set of 3 + 1 run of 4", "1 set of 4 + 1 run of 4", "1 run of 7",
+    "1 run of 8", "1 run of 9", "2 sets of 4", "7 cards of 1 color",
+    "1 set of 5 + 1 set of 2", "1 set of 5 + 1 set of 3"
+  ];
+  const TITLE_COLORS = ["#e4572e", "#2e86ab", "#f2b705", "#4c9f70", "#7d5ba6", "#c76b98"];
 
-    // Theme Toggle (Auto-detects initially, manual button overrides)
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) toggleTheme(true);
-    function toggleTheme(forceDark = null) {
-        const isDark = forceDark !== null ? forceDark : !document.body.classList.contains('dark');
-        document.body.classList.toggle('dark', isDark);
-        document.getElementById('theme-btn').innerText = isDark ? '🌙' : '☀️';
+  // ---------- Title cards ----------
+  function buildTitle() {
+    const word = "PHASE10";
+    const el = document.getElementById("titleCards");
+    const rotations = [-6, 4, -3, 5, -5, 3, -4];
+    word.split("").forEach((ch, i) => {
+      const card = document.createElement("div");
+      const isNum = /[0-9]/.test(ch);
+      card.className = "card-letter" + (isNum ? " num-card" : "");
+      card.style.setProperty("--r", rotations[i % rotations.length] + "deg");
+      if (!isNum) card.style.background = TITLE_COLORS[i % (TITLE_COLORS.length - 1)];
+      card.textContent = ch;
+      card.setAttribute("data-pip", ch);
+      el.appendChild(card);
+    });
+  }
+
+  // ---------- Toast (replaces alert() for a look that matches the app) ----------
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  // ---------- Theme toggle ----------
+  if (window.matchMedia('(prefers-color-scheme: light)').matches) toggleTheme(false);
+  function toggleTheme(forceDark = null) {
+    const goingDark = forceDark !== null ? forceDark : document.body.classList.contains('light');
+    document.body.classList.toggle('light', !goingDark);
+    document.getElementById('theme-btn').innerText = goingDark ? '🌙' : '☀️';
+  }
+
+  // ---------- Setup ----------
+  function addPlayer() {
+    const nameInput = document.getElementById('p-name');
+    const name = nameInput.value.trim();
+    if (!name) return;
+    if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+      showToast(`"${name}" is already in this game.`);
+      return;
+    }
+    players.push({ name, score: 0, phase: 1 });
+    nameInput.value = '';
+    nameInput.focus();
+    renderSetup();
+  }
+
+  function renderSetup() {
+    const list = document.getElementById('p-list');
+    list.innerHTML = players.map((p, i) => `
+      <li>
+        <span>${escapeHtml(p.name)}</span>
+        <button class="danger" onclick="players.splice(${i},1);renderSetup()">×</button>
+      </li>
+    `).join('');
+    document.getElementById('start-btn').classList.toggle('hidden', players.length < 2);
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function startGame() {
+    document.getElementById('setup-screen').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+    dealer = Math.floor(Math.random() * players.length);
+    updateUI();
+  }
+
+  // ---------- Phase / help modals ----------
+  function showPhase(num) {
+    document.getElementById('phase-detail-text').innerText = num > 10 ? 'Game complete!' : `Phase ${num}: ${phases[num - 1]}`;
+    document.getElementById('phase-modal').classList.remove('hidden');
+  }
+
+  function openHelp() {
+    const list = document.getElementById('help-phases-list');
+    list.innerHTML = phases.map((p, i) => `<li><strong>Phase ${i + 1}:</strong> ${p}</li>`).join('');
+    document.getElementById('help-modal').classList.remove('hidden');
+  }
+
+  // ---------- Game screen ----------
+  function updateUI() {
+    document.getElementById('r-num').innerText = round;
+    document.getElementById('d-name').innerText = players[dealer].name;
+
+    document.getElementById('score-body').innerHTML = players.map(p => `
+      <tr>
+        <td class="name-cell">${escapeHtml(p.name)}</td>
+        <td><span class="phase-link" onclick="showPhase(${p.phase})">${p.phase <= 10 ? p.phase : 'Done'}</span></td>
+        <td class="score-cell-val">${p.score}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('input-body').innerHTML = players.map((p, i) => `
+      <tr>
+        <td class="name-cell">${escapeHtml(p.name)}</td>
+        <td><input type="checkbox" id="chk-${i}" ${p.phase > 10 ? 'disabled' : ''} onchange="validateField(${i})"></td>
+        <td>
+          <div class="pts-input-wrap">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" id="pts-${i}" value="0" class="pts-input"
+                   onfocus="onScoreFocus(this)" onblur="onScoreBlur(${i})" onkeydown="onScoreKeyDown(event, ${i})">
+            <button class="calc-btn" onclick="openCalc(${i})">Calc</button>
+          </div>
+          <div class="field-error" id="err-${i}"></div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function onScoreFocus(input) {
+    if (input.value === '0') input.value = '';
+  }
+
+  function onScoreBlur(i) {
+    const input = document.getElementById(`pts-${i}`);
+    if (input.value.trim() === '') { input.value = '0'; }
+    validateField(i);
+  }
+
+  // A hand can only drop below 50 points (ten 1-9 cards) if cards were laid
+  // down, which requires having completed the phase that round — so any
+  // score under 50 must come with "Cleared" checked.
+  function validateField(i) {
+    const input = document.getElementById(`pts-${i}`);
+    const errEl = document.getElementById(`err-${i}`);
+    const chk = document.getElementById(`chk-${i}`);
+    const val = parseInt(input.value, 10);
+
+    if (isNaN(val) || val < 0 || val % 5 !== 0) {
+      input.classList.add('invalid');
+      errEl.textContent = 'Ends in 0 or 5';
+      return false;
+    }
+    if (val < 50 && chk && !chk.disabled && !chk.checked) {
+      input.classList.add('invalid');
+      errEl.textContent = 'Under 50 means they phased — check Cleared';
+      return false;
+    }
+    input.classList.remove('invalid');
+    errEl.textContent = '';
+    return true;
+  }
+
+  function onScoreKeyDown(event, currentIndex) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const nextInput = document.getElementById(`pts-${currentIndex + 1}`);
+      if (nextInput) {
+        nextInput.focus();
+      } else {
+        submitRound();
+      }
+    }
+  }
+
+  function submitRound() {
+    let validationPassed = true;
+    players.forEach((p, i) => {
+      const input = document.getElementById(`pts-${i}`);
+      if (input.value.trim() === '') input.value = '0';
+      if (!validateField(i)) validationPassed = false;
+    });
+
+    if (!validationPassed) {
+      showToast('Fix the highlighted scores before submitting.');
+      return;
     }
 
-    // --- Game Logic ---
-    function addPlayer() {
-        const name = document.getElementById('p-name').value.trim();
-        if (!name) return;
-        
-        // Validation: Duplicate Name Check
-        if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-            alert(`"${name}" has already been added to this game.`);
-            return;
-        }
+    let winners = [];
+    players.forEach((p, i) => {
+      const scoreToAdd = parseInt(document.getElementById(`pts-${i}`).value, 10) || 0;
+      if (document.getElementById(`chk-${i}`).checked && p.phase <= 10) p.phase++;
+      p.score += scoreToAdd;
+      if (p.phase > 10) winners.push(p);
+    });
 
-        players.push({ name, score: 0, phase: 1 });
-        document.getElementById('p-name').value = '';
-        renderSetup();
+    if (winners.length) {
+      winners.sort((a, b) => a.score - b.score);
+      finalizeGame(winners);
+      return;
     }
+    round++;
+    dealer = (dealer + 1) % players.length;
+    updateUI();
+  }
 
-    function renderSetup() {
-        const list = document.getElementById('p-list');
-        list.innerHTML = players.map((p, i) => `
-            <li style="display:flex; justify-content:space-between; margin-bottom:5px; background:var(--bg); padding:6px; border-radius:4px;">
-                <span>${p.name}</span><button class="danger" style="padding:2px 6px; font-size:0.8rem;" onclick="players.splice(${i},1);renderSetup()">X</button>
-            </li>
-        `).join('');
-        document.getElementById('start-btn').classList.toggle('hidden', players.length < 2);
+  // Game over: pop the winner modal as a one-time announcement, and switch
+  // the main page into a "final scores" view with two ways to start again.
+  function finalizeGame(winners) {
+    updateUI();
+
+    const names = winners.map(w => w.name).join(' & ');
+    document.getElementById('round-plaque').textContent = 'Game complete';
+
+    const banner = document.getElementById('winner-banner');
+    banner.classList.remove('hidden');
+    banner.innerHTML = `
+      <div style="font-size:1.8rem;">🏆</div>
+      <div class="winner-badge">${escapeHtml(names)} win${winners.length === 1 ? 's' : ''}!</div>
+      <div class="winner-sub">Finished all 10 phases with ${winners[0].score} points.</div>
+    `;
+
+    document.getElementById('winner-name').textContent = `${names} win${winners.length === 1 ? 's' : ''}!`;
+    document.getElementById('winner-sub').textContent = `Finished all 10 phases with ${winners[0].score} points.`;
+    document.getElementById('winner-modal').classList.remove('hidden');
+
+    document.getElementById('input-table').classList.add('hidden');
+    document.getElementById('end-of-round-title').classList.add('hidden');
+    document.getElementById('submit-btn').classList.add('hidden');
+    document.getElementById('new-game-actions').classList.remove('hidden');
+  }
+
+  function exitToFreshGameScreen() {
+    document.getElementById('round-plaque').innerHTML = 'Round <span id="r-num">1</span> — Dealer: <span id="d-name"></span>';
+    document.getElementById('winner-banner').classList.add('hidden');
+    document.getElementById('winner-banner').innerHTML = '';
+    document.getElementById('input-table').classList.remove('hidden');
+    document.getElementById('end-of-round-title').classList.remove('hidden');
+    document.getElementById('submit-btn').classList.remove('hidden');
+    document.getElementById('new-game-actions').classList.add('hidden');
+  }
+
+  function newGameNewPlayers() {
+    players = [];
+    round = 1;
+    dealer = 0;
+    exitToFreshGameScreen();
+    document.getElementById('game-screen').classList.add('hidden');
+    document.getElementById('setup-screen').classList.remove('hidden');
+    renderSetup();
+  }
+
+  function newGameSamePlayers() {
+    players.forEach(p => { p.score = 0; p.phase = 1; });
+    round = 1;
+    dealer = Math.floor(Math.random() * players.length);
+    exitToFreshGameScreen();
+    updateUI();
+  }
+
+  // ---------- Calculator ----------
+  function calcTotalCards() {
+    return cardCounters.reduce((sum, c) => sum + c.qty, 0);
+  }
+
+  // If the phase wasn't cleared, no cards could have been laid down, so the
+  // count entered here must equal the full 10-card hand.
+  function validateCalc() {
+    const cleared = document.getElementById('calc-cleared').checked;
+    const total = calcTotalCards();
+    const errEl = document.getElementById('calc-err');
+    if (!cleared && total !== 10) {
+      errEl.textContent = `Not cleared — enter all 10 cards (currently ${total}).`;
+      return false;
     }
+    errEl.textContent = '';
+    return true;
+  }
 
-    function startGame() {
-        document.getElementById('setup-screen').classList.add('hidden');
-        document.getElementById('game-screen').classList.remove('hidden');
-        dealer = Math.floor(Math.random() * players.length);
-        updateUI();
+  function openCalc(pIdx) {
+    activeInputId = `pts-${pIdx}`;
+    document.getElementById('calc-user').innerText = `Cards: ${players[pIdx].name}`;
+    cardCounters.forEach(c => c.qty = 0);
+    const mainChk = document.getElementById(`chk-${pIdx}`);
+    const calcChk = document.getElementById('calc-cleared');
+    calcChk.checked = mainChk ? mainChk.checked : false;
+    calcChk.disabled = mainChk ? mainChk.disabled : false;
+    renderCalc();
+    document.getElementById('calc-modal').classList.remove('hidden');
+  }
+
+  function renderCalc() {
+    let total = 0;
+    document.getElementById('calc-rows-container').innerHTML = cardCounters.map((c, i) => {
+      total += c.qty * c.val;
+      return `
+        <div class="calc-row">
+          <div><strong>${c.label}</strong><small>${c.val} pts</small></div>
+          <div class="calc-ctrls">
+            <button onclick="changeQty(${i},-1)">−</button>
+            <span style="font-weight:700; min-width:20px; text-align:center; font-family:'JetBrains Mono',monospace;">${c.qty}</span>
+            <button onclick="changeQty(${i},1)">+</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    document.getElementById('calc-total').innerText = total;
+    validateCalc();
+  }
+
+  function changeQty(idx, amt) {
+    cardCounters[idx].qty = Math.max(0, cardCounters[idx].qty + amt);
+    renderCalc();
+  }
+
+  function closeCalc(apply) {
+    if (apply && activeInputId) {
+      if (!validateCalc()) {
+        showToast('Fix the card count before applying.');
+        return;
+      }
+      const idx = activeInputId.split('-')[1];
+      const input = document.getElementById(activeInputId);
+      input.value = document.getElementById('calc-total').innerText;
+
+      const mainChk = document.getElementById(`chk-${idx}`);
+      if (mainChk && !mainChk.disabled) mainChk.checked = document.getElementById('calc-cleared').checked;
+
+      validateField(idx);
     }
+    document.getElementById('calc-modal').classList.add('hidden');
+    activeInputId = null;
+  }
 
-    function showPhase(num) {
-        document.getElementById('phase-detail-text').innerText = num > 10 ? 'Game Complete!' : `Phase ${num}: ${phases[num - 1]}`;
-        document.getElementById('phase-modal').classList.remove('hidden');
-    }
-
-    function openHelp() {
-        const list = document.getElementById('help-phases-list');
-        list.innerHTML = phases.map((p, i) => `<li><strong>Phase ${i+1}:</strong> ${p}</li>`).join('');
-        document.getElementById('help-modal').classList.remove('hidden');
-    }
-
-    function updateUI() {
-        document.getElementById('r-num').innerText = round;
-        document.getElementById('d-name').innerText = players[dealer].name;
-        
-        document.getElementById('score-body').innerHTML = players.map(p => `
-            <tr>
-                <td style="font-weight:bold;">${p.name}</td>
-                <td><span class="phase-link" onclick="showPhase(${p.phase})">${p.phase <= 10 ? p.phase : 'Done'}</span></td>
-                <td style="font-weight:bold; color:var(--primary);">${p.score}</td>
-            </tr>
-        `).join('');
-
-        document.getElementById('input-body').innerHTML = players.map((p, i) => `
-            <tr>
-                <td>${p.name}</td>
-                <td><input type="checkbox" id="chk-${i}" ${p.phase > 10 ? 'disabled' : ''}></td>
-                <td>
-                    <div style="display:flex; align-items:center; justify-content:center; gap:5px;">
-                        <input type="text" 
-                               inputmode="numeric" 
-                               pattern="[0-9]*" 
-                               id="pts-${i}" 
-                               value="0" 
-                               style="width:50px; text-align:center;"
-                               onfocus="onScoreFocus(this)" 
-                               onblur="onScoreBlur(this)"
-                               onkeydown="onScoreKeyDown(event, ${i})">
-                        <button style="padding:4px 8px; font-size:0.8rem;" onclick="openCalc(${i})">Calc</button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    // Clear the '0' when focused so the player can type instantly
-    function onScoreFocus(input) {
-        if (input.value === '0') {
-            input.value = '';
-        }
-    }
-
-    // Revert back to '0' if user leaves it empty
-    function onScoreBlur(input) {
-        if (input.value.trim() === '') {
-            input.value = '0';
-        }
-    }
-
-    // Track standard enter/mobile "Go" buttons
-    function onScoreKeyDown(event, currentIndex) {
-        if (event.key === 'Enter') {
-            event.preventDefault(); // Stop default form actions
-            
-            const nextIndex = currentIndex + 1;
-            const nextInput = document.getElementById(`pts-${nextIndex}`);
-            
-            if (nextInput) {
-                // Focus and auto-select next input
-                nextInput.focus();
-            } else {
-                // If it was the last person, submit the round automatically!
-                submitRound();
-            }
-        }
-    }
-
-    function submitRound() {
-        let winners = [];
-        let validationPassed = true;
-
-        // Validation Check
-        players.forEach((p, i) => {
-            const inputVal = document.getElementById(`pts-${i}`).value;
-            const scoreToAdd = parseInt(inputVal) || 0;
-
-            // Enforce scores must end in 0 or 5
-            if (scoreToAdd % 5 !== 0 || scoreToAdd < 0 || isNaN(scoreToAdd)) {
-                alert(`Error: ${p.name}'s points must be a valid number ending in 5 or 0.`);
-                document.getElementById(`pts-${i}`).focus();
-                validationPassed = false;
-            }
-        });
-
-        if (!validationPassed) return; // Stop submission if scores fail validation
-
-        players.forEach((p, i) => {
-            const scoreToAdd = parseInt(document.getElementById(`pts-${i}`).value) || 0;
-            if (document.getElementById(`chk-${i}`).checked && p.phase <= 10) p.phase++;
-            p.score += scoreToAdd;
-            if (p.phase > 10) winners.push(p);
-        });
-
-        if (winners.length) {
-            winners.sort((a,b) => a.score - b.score);
-            alert(`🎉 ${winners[0].name} wins with ${winners[0].score} points!`);
-            location.reload();
-            return;
-        }
-        round++;
-        dealer = (dealer + 1) % players.length;
-        updateUI();
-    }
-
-    // --- Calculator Logic ---
-    function openCalc(pIdx) {
-        activeInputId = `pts-${pIdx}`;
-        document.getElementById('calc-user').innerText = `Cards: ${players[pIdx].name}`;
-        cards.forEach(c => c.qty = 0);
-        renderCalc();
-        document.getElementById('calc-modal').classList.remove('hidden');
-    }
-
-    function renderCalc() {
-        let total = 0;
-        document.getElementById('calc-rows-container').innerHTML = cards.map((c, i) => {
-            total += c.qty * c.val;
-            return `
-                <div class="calc-row">
-                    <div><strong>${c.label}</strong> <small style="color:var(--sub); display:block;">${c.val} pts</small></div>
-                    <div class="calc-ctrls">
-                        <button onclick="changeQty(${i},-1)">-</button>
-                        <span style="font-weight:bold; min-width:20px; text-align:center;">${c.qty}</span>
-                        <button onclick="changeQty(${i},1)">+</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        document.getElementById('calc-total').innerText = total;
-    }
-
-    function changeQty(idx, amt) {
-        cards[idx].qty = Math.max(0, cards[idx].qty + amt);
-        renderCalc();
-    }
-
-    function closeCalc(apply) {
-        if (apply && activeInputId) {
-            document.getElementById(activeInputId).value = document.getElementById('calc-total').innerText;
-        }
-        document.getElementById('calc-modal').classList.add('hidden');
-        activeInputId = null;
-    }
+  buildTitle();
+  renderSetup();
 </script>
 
 </body>
